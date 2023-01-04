@@ -55,9 +55,9 @@
         <div class="card-body">
           <h5>Connect</h5>
           <div class="form-group">
-            <label for="siteId">Site ID</label>
-            <input type="text" class="form-control" id="siteId" placeholder="Enter Site ID" onchange="saveInLocalStorage(event)">
-            <small id="siteIdHelp" class="form-text text-muted">Enter the Site ID that you received from Dialpad.</small>
+            <label for="clientId">Client ID</label>
+            <input type="text" class="form-control" id="clientId" placeholder="Enter Client ID" onchange="saveInLocalStorage(event)">
+            <small id="clientIdHelp" class="form-text text-muted">Enter the Client ID that you received from Dialpad.</small>
           </div>
           <button id="btnConnect" class="btn btn-block btn-success" onclick="connect()">Connect</button>
           <button id="btnDisconnect" class="btn btn-block btn-danger d-none" onclick="disconnect()">Disconnect</button>
@@ -194,7 +194,7 @@
      * On document ready auto-fill the input values from the localStorage.
     */
     ready(function() {
-      document.getElementById('project').value = project;
+      document.getElementById('clientId').value = clientId;
       document.getElementById('token').value = token;
       document.getElementById('number').value = number;
       document.getElementById('numberFrom').value = numberFrom;
@@ -219,7 +219,7 @@
       iframe.classList.add("wrapper");
       iframe.classList.add("stuck");
         // iframe.src="https://google.com/search?igu=1";
-      let clientId = document.getElementById('siteId').value 
+      let clientId = document.getElementById('clientId').value 
       iframe.src="https://dialpad.com/apps/"+clientId;
       document.body.appendChild(iframe);
       //   client = new CTI({
