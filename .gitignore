@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 # dpcti.html
+simplecert.pem
+simplekey.pem
