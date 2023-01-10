@@ -9,8 +9,9 @@
   <script type="text/javascript" src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
   <!-- To style up the demo a little -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
-  <link rel="shortcut icon" href="https://dialpad.com/assets/images/favicon.ico" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="shortcut icon" href="https://dialpad.com/favicon.ico" />
 
   <style>
     .wrapper{
@@ -33,11 +34,11 @@
   <div class="container">
     <div class="row pt-5">
       <div class="col-12 pb-3">
-        <h1>SDialpad CTI Sample Harness</h1>
+        <h1>Dialpad CTI Sample Harness</h1>
         <p>
-          This harness allows you to make calls to other browsers, SIP Endpoints or Phone Numbers from your Dialpad project in your browser.
+          This harness allows you to make calls to Phone Numbers from your Dialpad account in your browser.
           <br />
-          Visit <a href="https://docs.dialpad.com/topics/sdk-js">SDK for JavaScript Documentation</a> for more information and documentation.
+          Visit <a href="https://developers.dialpad.com/docs/dialpad-mini-dialer">Dialpad Mini Dialer (CTI)</a> for more information and documentation.
         </p>
       </div>
     </div>
@@ -67,42 +68,34 @@
         </div>
       </div>
       <div class="col-12 col-md-8 mt-4 mt-md-1">
-        <div class="row">
-          <div class="col-6">
-            <h5>Local Video</h5>
-            <video id="localVideo" autoplay="true" class="w-100" style="background-color: #000; border: 1px solid #ccc; border-radius: 5px;"></video>
-          </div>
-          <div class="col-6">
-            <h5>Remote Video</h5>
-            <video id="remoteVideo" autoplay="true" class="w-100" playsinline style="background-color: #000; border: 1px solid #ccc; border-radius: 5px;"></video>
-          </div>
+
+        <div class="input-group input-group-sm mb-3">
+          <span class="input-group-text" id="inputGroup-sizing-default">Call To:</span>
+          <input type="text" id="numberTo" class="form-control" placeholder="Enter a Number to Dial (e.164 format)" onchange="saveInLocalStorage(event)" aria-label="Number to Dial" aria-describedby="inputGroup-sizing-sm">
         </div>
 
-        <div class="form-group">
-           <div class="g-3 row">
-          <label for="number" class="col-sm-2 col-form-label">Call To:</label>
-          <div class="col-sm-10">
-          <input type="text" class="form-control" id="number" placeholder="Enter Resource or Number to Dial" onchange="saveInLocalStorage(event)">
-          <input type="text" class="form-control" id="number" placeholder="Enter Resource or Number to Dial" onchange="saveInLocalStorage(event)">
+        <div class="input-group input-group-sm mb-3">
+          <span class="input-group-text" id="inputGroup-sizing-default">Call From:</span>
+          <input type="text" id="identityFrom" class="form-control" placeholder="Enter Source ID to Call From" onchange="saveInLocalStorage(event)" aria-label="ID of Caller" aria-describedby="inputGroup-sizing-sm">
+          <input type="text" id="identityType" class="form-control" placeholder="Office | Department | Call Center" onchange="saveInLocalStorage(event)" aria-label="Caller Type" aria-describedby="inputGroup-sizing-sm">
         </div>
-      </div>
-          <label for="numberFrom">Call From:</label>
-          <input type="text" class="form-control" id="identityType" placeholder="Office | Department | Call Center" onchange="saveInLocalStorage(event)">
-                    <input type="text" class="form-control" id="identityFrom" placeholder="Enter Source ID to Call From" onchange="saveInLocalStorage(event)">
+
+        <div class="input-group input-group-sm mb-3">
+          <span class="input-group-text" id="inputGroup-sizing-default">Custom Data:</span>
+          <input type="text" id="customData" class="form-control" placeholder="Custom Data Attached to Call" onchange="saveInLocalStorage(event)" aria-label="Custom Data Attached to Call" aria-describedby="inputGroup-sizing-sm">
         </div>
-        <div>Call Options:</div>
-        <div class="form-check">
-          <input type="checkbox" id="audio" value="1" onchange="saveInLocalStorage(event)">
-          <label class="form-check-label" for="audio">
-            Include Audio
-          </label>
+
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" value="1" role="switch" id="audioEnabled">
+          <label class="form-check-label" for="audioEnabled">Include Audio</label>
         </div>
-        <div class="form-check">
-          <input type="checkbox" id="video" value="1" onchange="saveInLocalStorage(event)">
-          <label class="form-check-label" for="video">
-            Include Video
-          </label>
+
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" value="1" role="switch" id="videoEnabled" disabled hidden>
+          <label class="form-check-label" for="videoEnabled" hidden>Include Video</label>
         </div>
+
+
         <button id="startCall" class="btn btn-primary px-5 mt-4" onClick="makeCall()" disabled="true">Call</button>
         <button id="hangupCall" class="btn btn-danger px-5 mt-4 d-none" onClick="hangup()" disabled="true">Hang up</button>
         <div class="form-group" id="dtmfKeys" hidden="false">
@@ -124,6 +117,9 @@
           <button id="dtmf_d" class="btn btn-primary px-2 mt-4" onClick="dtmf()">D</button>
         </div>
 
+
+
+        <!-- </form> -->
       </div>
     </div>
     <hr />
@@ -149,10 +145,11 @@
 
       var clientId = localStorage.getItem('dpcti.example.clientId') || '';
     // var token = localStorage.getItem('dpcti.example.token') || '';
-      var number = localStorage.getItem('dpcti.example.number') || '';
-      var numberFrom = localStorage.getItem('dpcti.example.numberFrom') || '';
-      var audio = localStorage.getItem('dpcti.example.audio') || '1';
-      var video = localStorage.getItem('dpcti.example.video') || '1';
+      var numberTo = localStorage.getItem('dpcti.example.numberTo') || '';
+      var identityFrom = localStorage.getItem('dpcti.example.identityFrom') || '';
+      var identityType = localStorage.getItem('dpcti.example.identityType') || '';
+      var audioEnabled = localStorage.getItem('dpcti.example.audioEnabled') || '1';
+      var videoEnabled = localStorage.getItem('dpcti.example.videoEnabled') || '1';
       var timeThreshold=1000;
 
       const getCircularReplacer = () => {
@@ -212,10 +209,11 @@
     */
       ready(function() {
         document.getElementById('clientId').value = clientId;
-        document.getElementById('number').value = number;
-        document.getElementById('numberFrom').value = numberFrom;
-        document.getElementById('audio').checked = audio === '1';
-        document.getElementById('video').checked = video === '1';
+        document.getElementById('numberTo').value = numberTo;
+        document.getElementById('identityFrom').value = identityFrom;
+        document.getElementById('identityType').value = identityType;
+        document.getElementById('audioEnabled').checked = audioEnabled === '1';
+        document.getElementById('videoEnabled').checked = videoEnabled === '1';
         console.log("mediaDevices");
         navigator.mediaDevices.getUserMedia({ audio: true, video: true}).then(successCallback, errorCallback).catch((err) => {
           console.error(`${err.name}: ${err.message}`);
@@ -264,9 +262,9 @@
       function disconnect() {
         connectStatus.innerHTML = 'Disconnecting...';
         iframe.parentNode.removeChild(iframe);
-                    btnConnect.classList.remove('d-none');
-            btnDisconnect.classList.add('d-none');
-            connectStatus.innerHTML = 'Not Connected';
+        btnConnect.classList.remove('d-none');
+        btnDisconnect.classList.add('d-none');
+        connectStatus.innerHTML = 'Not Connected';
       }
 
       /**
@@ -289,23 +287,24 @@
     */
       function makeCall() {
         window.postMessage({
-  'api': 'opencti_dialpad',
-  'version': '1.0',
-  'method': 'initiate_call',
-  'payload': {
-    'enable_current_tab': true,
-    'phone_number': '+15555555555',
-    'identity_type': 'CallCenter',
-    'identity_id': 1234567,
-    'custom_data': 'any string'
-  }
-}, 'https://dialpad.com');
+          'api': 'opencti_dialpad',
+          'version': '1.0',
+          'method': 'initiate_call',
+          'payload': {
+            'enable_current_tab': true,
+            'phone_number': numberTo,
+            'identity_type': identityType,
+            'identity_id': identityFrom,
+            'custom_data': customData
+          }
+        }, 'https://dialpad.com');
 
         const params = {
         destinationNumber: document.getElementById('number').value, // required!
-        callerNumber: document.getElementById('numberFrom').value, // required!
-        audio: document.getElementById('audio').checked,
-        video: document.getElementById('video').checked ? { aspectRatio: 16/9 } : false,
+        identityFrom: document.getElementById('identityFrom').value,// optional
+        identityType: document.getElementById('identityType').value, // required if identityFrom specified!
+        audioEnabled: document.getElementById('audioEnabled').checked,
+        videoEnabled: document.getElementById('videoEnabled').checked ? { aspectRatio: 16/9 } : false,
       };
 
       currentCall = client.newCall(params);
