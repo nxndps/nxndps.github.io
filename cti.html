@@ -172,9 +172,13 @@
         }
       };
 
-      function successCallback(error) {
+      function successCallback(s) {
         detectPermissionDialog(true);
         console.log("mediaDevices granted");
+        const stream = s;
+        const tracks = stream.getTracks();
+        tracks[0].stop;
+        console.log("mediaDevices released");
       };
 
       function errorCallback(error) {
@@ -194,10 +198,13 @@
             btnConnect.classList.add('d-none');
             btnDisconnect.classList.remove('d-none');
             connectStatus.innerHTML = 'Connected';
+            console.log(`user id ${data.payload.user_id}`);
           }
           break;
         case "call_ringing":
+          console.log(`ringing state ${data.payload.state}`);
           callStatus.innerHTML = data.payload.state;
+          callStatus.innerHTML = data.payload.state=="on"?"Ringing":"Stopped Ringing";
           break;
         default:
           console.warn(`unknown event: ${data.method}`);
@@ -215,15 +222,17 @@
         document.getElementById('audioEnabled').checked = audioEnabled === '1';
         document.getElementById('videoEnabled').checked = videoEnabled === '1';
         console.log("mediaDevices");
+        // Request some permissions
+        Notification.requestPermission();
         navigator.mediaDevices.getUserMedia({ audio: true, video: true}).then(successCallback, errorCallback).catch((err) => {
           console.error(`${err.name}: ${err.message}`);
         });;
         window.addEventListener('message', event => {
-          console.log(event.origin);
           if (event.origin === 'https://dialpad.com') {
-            console.log(event.data);
+            // console.log(event.data);
             handleMessage(event.data);
           } else {
+            console.log(event.origin)
             console.warn(event.data);
             return;
           }
@@ -236,10 +245,13 @@
     */
       function connect() {
         iframe = document.createElement('iframe');
+        iframe.setAttribute("id","minidial");
+        iframe.setAttribute("title","Dialpad");
         iframe.setAttribute("height", "600px");
         iframe.setAttribute("width", "400px");
         iframe.setAttribute("allow", "microphone *; autoplay; camera *; display-capture *; hid *");
         iframe.setAttribute("sandbox","allow-forms allow-popups allow-scripts allow-same-origin");
+        // iframe.setAttribute("sandbox","allow-forms allow-popups allow-modals allow-scripts allow-same-origin");
         iframe.setAttribute("frameborder", "0");
         iframe.classList.add("wrapper");
         iframe.classList.add("stuck");
@@ -250,8 +262,6 @@
             'method': 'enable_current_tab'
           }, 'https://dialpad.com');
           console.log("CTI iframe loaded")
-
-
           startCall.disabled = false;
         }
         let clientId = document.getElementById('clientId').value 
@@ -260,6 +270,7 @@
       }
 
       function disconnect() {
+        console.log("destroying iframe")
         connectStatus.innerHTML = 'Disconnecting...';
         iframe.parentNode.removeChild(iframe);
         btnConnect.classList.remove('d-none');
@@ -286,99 +297,33 @@
      * Make a new outbound call
     */
       function makeCall() {
-        window.postMessage({
+        console.log("making call")
+        iframe.contentWindow.postMessage({
           'api': 'opencti_dialpad',
           'version': '1.0',
           'method': 'initiate_call',
           'payload': {
             'enable_current_tab': true,
-            'phone_number': numberTo,
-            'identity_type': identityType,
-            'identity_id': identityFrom,
-            'custom_data': customData
+            'phone_number': document.getElementById('numberTo').value,
+            'custom_data': document.getElementById('customData').value,
+            'identity_type': document.getElementById('identityType').value,
+            'identity_id': document.getElementById('identityFrom').value
           }
         }, 'https://dialpad.com');
-
-        const params = {
-        destinationNumber: document.getElementById('number').value, // required!
-        identityFrom: document.getElementById('identityFrom').value,// optional
-        identityType: document.getElementById('identityType').value, // required if identityFrom specified!
-        audioEnabled: document.getElementById('audioEnabled').checked,
-        videoEnabled: document.getElementById('videoEnabled').checked ? { aspectRatio: 16/9 } : false,
-      };
-
-      currentCall = client.newCall(params);
     }
 
     /**
      * Send a DTMF to currentCall if present
     */
     function dtmf() {
-      if (currentCall) {
-        let dtmfkey = event.srcElement.id;
-        console.log(dtmfkey);
-        switch (dtmfkey) {
-        case 'dtmf_0':
-          currentCall.dtmf('0');
-          break;
-        case 'dtmf_1':
-          currentCall.dtmf('1');
-          break;
-        case 'dtmf_2':
-          currentCall.dtmf('2');
-          break;
-        case 'dtmf_3':
-          currentCall.dtmf('3');
-          break;
-        case 'dtmf_4':
-          currentCall.dtmf('4');
-          break;
-        case 'dtmf_5':
-          currentCall.dtmf('5');
-          break;
-        case 'dtmf_6':
-          currentCall.dtmf('6');
-          break;
-        case 'dtmf_7':
-          currentCall.dtmf('7');
-          break;
-        case 'dtmf_8':
-          currentCall.dtmf('8');
-          break;
-        case 'dtmf_9':
-          currentCall.dtmf('9');
-          break;
-        case 'dtmf_hash':
-          currentCall.dtmf('#');
-          break;
-        case 'dtmf_star':
-          currentCall.dtmf('*');
-          break;
-        case 'dtmf_a':
-          currentCall.dtmf('a');
-          break;
-        case 'dtmf_b':
-          currentCall.dtmf('b');
-          break;
-        case 'dtmf_c':
-          currentCall.dtmf('c');
-          break;
-        case 'dtmf_d':
-          currentCall.dtmf('d');
-          break;
-        default:
-          console.log("unknown dtmf");
-        }
-      }
+      // TODO:
     }
 
     /**
      * Hangup the currentCall if present
     */
     function hangup() {
-      if (currentCall) {
-        currentCall.hangup()
-      }
+      // TODO:
     }
 
     function saveInLocalStorage(e) {
