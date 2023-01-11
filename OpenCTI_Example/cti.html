@@ -127,13 +127,18 @@
       <h3 class="mb-3">Instructions</h3>
       <ol>
         <li>Follow the <a href="https://docs.dialpad.com/topics/sdk-js#sdk-for-javascript-using-the-sdk">Getting Started</a> steps in the JavaScript SDK Documentation to generate a JSON Web Token for your project.</li>
-        <li>Load the index.html file in your browser. While you don't need to setup or run any HTTP servers it is recommended that you run a simple web server to accomodate browser permission policies. You can also just double clicking the file or open it directly but you may be prompted repeatedly for camera and mic permissions.<br>The easiest way to do this is by starting a light weight python server: <code>python3 -m http.server 9898</code><br>Then you can point your browser to <a href="http://localhost:9898/dpcti.html">http://localhost:9898/index.html</a></li>
-        <li>Fill in your Project ID and JWT. Click Connect and thats it! You'll now be able to dial other web browsers and SIP endpoints from your Dialpad project, as well as dial out to phone numbers.</li>
+        <li>Create an SSL Certificate by running <code>makecert.sh</code></li>
+        <li>Add a record to the local <code>/etc/hosts</code> file <code>sudo sh -c 'echo "127.0.0.1       local.test.dom" >> /etc/hosts'</code></li>
+        <li>Start a basic HTTPS Server running <code>chmod +x simplehttpserver.py3 && ./simplehttpserver.py3</code></li>
+        <li>Load the Sample. <a href="https://local.test.dom:9443/OpenCTI_Example/cti.html">https://local.test.dom:9443/OpenCTI_Example/cti.html</a></li>
+        <li>Fill Client ID Provided by Dialpad and click Connect. Thats it! You'll now be able to dial from your Dialpad account.</li>
       </ol>
 
       <div class="col-12">
         <h4>Troubleshooting</h4>
-        <p>If you notice any JavaScript errors in the console relating to <code>localStorage</code>, try unblocking 3rd Party Cookies. Some browsers mark localStorage Cookies as 3rd Party when being run from <code>file://</code>.</p>
+        <p>If you notice any JavaScript errors in the console relating to <code>localStorage</code> use developer tools to clear the data.</p>
+        <p>If you notice any JavaScript errors in the console relating to <code>Content Security Policy</code> double check that your origin is set to <code>https://local.test.dom:*</code> in the Oauth Application that you submitted. You should also check to be sure the sandbox includes <code>allow-same-origin</code></p>
+        <p>If you notice that the iframe can not aquire the micrphone and camera check the permissions for the page and make sure they are allowed. You will also need to be using HTTPS:// and not HTTPS://.</p>
       </div>
     </div>
 
@@ -144,7 +149,6 @@
       var iframe; // CTI IFrame
 
       var clientId = localStorage.getItem('dpcti.example.clientId') || '';
-    // var token = localStorage.getItem('dpcti.example.token') || '';
       var numberTo = localStorage.getItem('dpcti.example.numberTo') || '';
       var identityFrom = localStorage.getItem('dpcti.example.identityFrom') || '';
       var identityType = localStorage.getItem('dpcti.example.identityType') || '';
@@ -152,6 +156,9 @@
       var videoEnabled = localStorage.getItem('dpcti.example.videoEnabled') || '1';
       var timeThreshold=1000;
 
+      /**
+       * Utility funtion to log circular objects.
+      */
       const getCircularReplacer = () => {
         const seen = new WeakSet();
         return (key, value) => {
@@ -199,6 +206,7 @@
             btnDisconnect.classList.remove('d-none');
             connectStatus.innerHTML = 'Connected';
             console.log(`user id ${data.payload.user_id}`);
+            enableTabCTI();
           }
           break;
         case "call_ringing":
@@ -250,8 +258,7 @@
         iframe.setAttribute("height", "600px");
         iframe.setAttribute("width", "400px");
         iframe.setAttribute("allow", "microphone *; autoplay; camera *; display-capture *; hid *");
-        iframe.setAttribute("sandbox","allow-forms allow-popups allow-scripts allow-same-origin");
-        // iframe.setAttribute("sandbox","allow-forms allow-popups allow-modals allow-scripts allow-same-origin");
+        iframe.setAttribute("sandbox","allow-forms allow-popups allow-scripts allow-modals allow-same-origin");
         iframe.setAttribute("frameborder", "0");
         iframe.classList.add("wrapper");
         iframe.classList.add("stuck");
@@ -267,6 +274,9 @@
         let clientId = document.getElementById('clientId').value 
         iframe.src="https://dialpad.com/apps/"+clientId;
         document.body.appendChild(iframe);
+        iframe.onload = function() {
+          console.log("CTI iframe created");
+        }
       }
 
       function disconnect() {
@@ -278,19 +288,15 @@
         connectStatus.innerHTML = 'Not Connected';
       }
 
-      /**
-       * Handle notification from the client.
-      */
-      function handleNotification(notification) {
-        console.log("notification", notification.type, notification);
-        switch (notification.type) {
-        case 'callUpdate':
-          handleCallUpdate(notification.call);
-          break;
-        case 'userMediaError':
-          // Permission denied or invalid audio/video params on `getUserMedia`
-          break;
-        }
+    /**
+     * Make the current tab active for CTI
+    */
+      function enableTabCTI() {
+        iframe.contentWindow.postMessage({
+          'api': 'opencti_dialpad',
+          'version': '1.0',
+          'method': 'enable_current_tab',
+        }, 'https://dialpad.com');
       }
 
     /**
@@ -310,42 +316,44 @@
             'identity_id': document.getElementById('identityFrom').value
           }
         }, 'https://dialpad.com');
-    }
+      }
 
     /**
      * Send a DTMF to currentCall if present
     */
-    function dtmf() {
+      function dtmf() {
       // TODO:
-    }
+      }
 
     /**
      * Hangup the currentCall if present
     */
-    function hangup() {
+      function hangup() {
       // TODO:
-    }
-
-    function saveInLocalStorage(e) {
-      var key = e.target.name || e.target.id
-      localStorage.setItem('dpcti.example.' + key, e.target.value);
-    }
-
-    // jQuery document.ready equivalent
-    function ready(callback) {
-      if (document.readyState != 'loading') {
-        callback();
-      } else if (document.addEventListener) {
-        document.addEventListener('DOMContentLoaded', callback);
-      } else {
-        document.attachEvent('onreadystatechange', function() {
-          if (document.readyState != 'loading') {
-            callback();
-          }
-        });
       }
-    }
-  </script>
-</body>
-</html>
+
+      function saveInLocalStorage(e) {
+        var key = e.target.name || e.target.id
+        localStorage.setItem('dpcti.example.' + key, e.target.value);
+      }
+
+    /**
+     * Wait fot the page to be ready.
+    */ 
+      function ready(callback) {
+        if (document.readyState != 'loading') {
+          callback();
+        } else if (document.addEventListener) {
+          document.addEventListener('DOMContentLoaded', callback);
+        } else {
+          document.attachEvent('onreadystatechange', function() {
+            if (document.readyState != 'loading') {
+              callback();
+            }
+          });
+        }
+      }
+    </script>
+  </body>
+  </html>
 
