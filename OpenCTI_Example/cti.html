@@ -207,6 +207,7 @@
             connectStatus.innerHTML = 'Connected';
             console.log(`user id ${data.payload.user_id}`);
             enableTabCTI();
+            startCall.disabled = false;
           }
           break;
         case "call_ringing":
@@ -262,15 +263,6 @@
         iframe.setAttribute("frameborder", "0");
         iframe.classList.add("wrapper");
         iframe.classList.add("stuck");
-        iframe.onload = function() {
-          iframe.contentWindow.postMessage({
-            'api': 'opencti_dialpad',
-            'version': '1.0',
-            'method': 'enable_current_tab'
-          }, 'https://dialpad.com');
-          console.log("CTI iframe loaded")
-          startCall.disabled = false;
-        }
         let clientId = document.getElementById('clientId').value 
         iframe.src="https://dialpad.com/apps/"+clientId;
         document.body.appendChild(iframe);
